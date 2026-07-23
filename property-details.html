@@ -53,27 +53,49 @@ tailwind.config = {
     </div>
 
 <script>
-    const DEFAULT_PROPERTIES = [];
-
-    function getProperty() {
+    function loadPropertyFromFirebase() {
         const urlParams = new URLSearchParams(window.location.search);
-        const id = parseInt(urlParams.get('id'));
-        if(!id) return null;
-
-        const customProps = JSON.parse(localStorage.getItem('customProperties') || '[]');
-        const allProps = [...customProps, ...DEFAULT_PROPERTIES];
-        
-        return allProps.find(p => p.id === id);
-    }
-
-    function renderProperty() {
-        const p = getProperty();
+        const id = urlParams.get('id');
         const container = document.getElementById('detailsContainer');
 
-        if (!p) {
-            container.innerHTML = `<div class="text-center flex flex-col items-center justify-center h-full min-h-[600px]"><h2 class="text-2xl font-bold">Property Not Found</h2><a href="user-dashboard.html" class="text-blue-500 underline mt-4 inline-block">Return to Dashboard</a></div>`;
+        if (!id) {
+            showNotFound(container);
             return;
         }
+
+        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js").then(({ initializeApp }) => {
+            import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(async ({ getFirestore, doc, getDoc }) => {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDYdTCripHL3z68_ok_3weUp34yvhD6zLk",
+                    authDomain: "real-estate-78412.firebaseapp.com",
+                    projectId: "real-estate-78412",
+                    storageBucket: "real-estate-78412.firebasestorage.app",
+                    messagingSenderId: "846988109657",
+                    appId: "1:846988109657:web:ebf3f52bc25153c306ce48"
+                };
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+
+                try {
+                    const docSnap = await getDoc(doc(db, "properties", id));
+                    if (docSnap.exists()) {
+                        renderProperty({ id: docSnap.id, ...docSnap.data() }, container);
+                    } else {
+                        showNotFound(container);
+                    }
+                } catch (e) {
+                    console.error("Error fetching property:", e);
+                    showNotFound(container);
+                }
+            });
+        });
+    }
+
+    function showNotFound(container) {
+        container.innerHTML = `<div class="text-center flex flex-col items-center justify-center h-full min-h-[600px]"><h2 class="text-2xl font-bold">Property Not Found</h2><a href="user-dashboard.html" class="text-blue-500 underline mt-4 inline-block">Return to Dashboard</a></div>`;
+    }
+
+    function renderProperty(p, container) {
 
         container.innerHTML = `
             <div class="flex flex-col lg:flex-row h-full min-h-[calc(100vh-65px)] max-w-[1500px] mx-auto">
@@ -152,7 +174,7 @@ tailwind.config = {
         `;
     }
 
-    renderProperty();
+    loadPropertyFromFirebase();
 </script>
 </body>
 </html>
