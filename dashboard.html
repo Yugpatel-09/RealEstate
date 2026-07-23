@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Enterprise Console - A. MANGUKIYA</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700&family=Playfair+Display:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#152134",
+                        "sand-accent": "#F7E6CC",
+                        "surface-dim": "#dedacd",
+                        "surface": "#fdf9eb",
+                        "background": "#fdf9eb",
+                        "error": "#ba1a1a"
+                    },
+                    "fontFamily": {
+                        "hanken": ["Hanken Grotesk", "sans-serif"],
+                        "manrope": ["Manrope", "sans-serif"],
+                        "serif-refined": ["Playfair Display", "serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(21, 33, 52, 0.1); border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(21, 33, 52, 0.2); }
+        
+        .toast-enter { animation: toast-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .toast-exit { animation: toast-slide-out 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes toast-slide-in {
+            0% { transform: translateY(-100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes toast-slide-out {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 8px 32px rgba(21, 33, 52, 0.04), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        
+        .glass-input {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: inset 0 2px 4px rgba(21, 33, 52, 0.02);
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(21, 33, 52, 0.2);
+            box-shadow: 0 0 0 4px rgba(21, 33, 52, 0.05);
+        }
+        
+        .dock-item.active {
+            background: rgba(21, 33, 52, 1);
+            color: white;
+            box-shadow: 0 4px 12px rgba(21, 33, 52, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-[#f5f1e8] text-primary font-manrope selection:bg-primary selection:text-white min-h-screen relative overflow-x-hidden antialiased">
+
+    <!-- Ambient Background Mesh -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-sand-accent/40 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-[ken-burns_15s_ease-in-out_infinite_alternate]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-white/60 rounded-full mix-blend-overlay filter blur-[120px] opacity-80 animate-[ken-burns_20s_ease-in-out_infinite_alternate_reverse]"></div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer" class="fixed top-8 right-1/2 translate-x-1/2 z-[300] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- FLOATING DOCK (Navigation & Actions) -->
+    <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 glass-panel rounded-full p-2 flex items-center gap-2">
+        <div class="px-4 pr-6 flex items-center justify-center border-r border-primary/10">
+            <svg class="w-6 h-6 text-primary" viewbox="0 0 100 100">
+                <path d="M50 0 L55 45 L100 50 L55 55 L50 100 L45 55 L0 50 L45 45 Z" fill="currentColor"></path>
+                <circle cx="50" cy="50" fill="#f5f1e8" r="8"></circle>
+            </svg>
+        </div>
+        
+        <button onclick="loadDashboardData(true)" class="dock-item px-6 py-3 rounded-full font-hanken font-bold text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center gap-2 hover:bg-white/50 text-primary">
+            <svg id="syncSpinner" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Sync Database
+        </button>
+        
+        <button onclick="exportToCSV()" class="dock-item px-6 py-3 rounded-full font-hanken font-bold text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center gap-2 hover:bg-white/50 text-primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Export CSV
+        </button>
+        
+        <div class="px-2 pl-4 border-l border-primary/10">
+            <a href="index.html" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/50 transition-colors text-primary" title="Exit to Public Site">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="relative z-10 max-w-6xl mx-auto pt-16 pb-40 px-6 min-h-screen space-y-12">
+        
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-serif-refined font-light tracking-tight mb-2">Leads Database</h1>
+                <p class="text-primary/40 font-hanken font-bold uppercase tracking-[0.3em] text-[10px]">A. Mangukiya Enterprise Console</p>
+            </div>
+
+            <!-- Global Search -->
+            <div class="relative w-full md:w-80">
+                <svg class="w-4 h-4 text-primary/40 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="globalSearch" oninput="applyFilters()" placeholder="Search (Press '/' to focus)..." class="w-full glass-input rounded-full pl-11 pr-4 py-3 text-sm focus:outline-none placeholder:text-primary/40 text-primary transition-all"/>
+            </div>
+        </header>
+
+        <!-- ANALYTICS OVERVIEW CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Stat 1 -->
+            <div class="glass-panel rounded-3xl p-8 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-primary/50 mb-6">
+                    <span class="text-[9px] font-hanken font-bold uppercase tracking-[0.1em]">Total Leads</span>
+                    <span class="text-primary font-bold text-[10px]">All Time</span>
+                </div>
+                <div id="statTotal" class="text-5xl font-serif-refined text-primary tracking-tight">0</div>
+                <div class="mt-6 pt-4 border-t border-primary/10 flex items-center justify-between text-[10px] text-primary/40">
+                    <span>Database Engine</span>
+                    <span class="font-mono">SQLite3</span>
+                </div>
+            </div>
+
+            <!-- Stat 2 -->
+            <div class="glass-panel rounded-3xl p-8 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-primary/50 mb-6">
+                    <span class="text-[9px] font-hanken font-bold uppercase tracking-[0.1em]">Today's Inquiries</span>
+                    <span class="text-emerald-700 bg-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded-full">Live</span>
+                </div>
+                <div id="statToday" class="text-5xl font-serif-refined text-primary tracking-tight">0</div>
+                <div class="mt-6 pt-4 border-t border-primary/10 flex items-center justify-between text-[10px] text-primary/40">
+                    <span>New Submissions</span>
+                    <span class="font-bold">Today</span>
+                </div>
+            </div>
+
+            <!-- Stat 3 -->
+            <div class="glass-panel rounded-3xl p-8 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-primary/50 mb-6">
+                    <span class="text-[9px] font-hanken font-bold uppercase tracking-[0.1em]">Server Latency</span>
+                    <span class="text-primary font-bold text-[10px]">Response</span>
+                </div>
+                <div class="text-5xl font-serif-refined text-primary tracking-tight">&lt; 1<span class="text-2xl">ms</span></div>
+                <div class="mt-6 pt-4 border-t border-primary/10 flex items-center justify-between text-[10px] text-primary/40">
+                    <span>Port Status</span>
+                    <span class="font-mono">:8000</span>
+                </div>
+            </div>
+
+            <!-- Stat 4 -->
+            <div class="glass-panel rounded-3xl p-8 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-primary/50 mb-6">
+                    <span class="text-[9px] font-hanken font-bold uppercase tracking-[0.1em]">Pipeline</span>
+                    <span class="text-primary font-bold text-[10px]">Active</span>
+                </div>
+                <div id="statActiveCount" class="text-4xl font-serif-refined text-primary tracking-tight">0 Leads</div>
+                <div class="mt-6 pt-4 border-t border-primary/10 flex items-center justify-between text-[10px] text-primary/40">
+                    <span>Ready for Follow-up</span>
+                    <span class="font-bold">100%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISUAL ACTIVITY CHART SECTION -->
+        <div class="glass-panel rounded-[2rem] p-10">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="text-sm font-hanken font-bold text-primary uppercase tracking-[0.2em]">Lead Activity Inflow</h3>
+                    <p class="text-[10px] text-primary/40 mt-1 uppercase tracking-widest font-bold">Real-time daily client registration volume</p>
+                </div>
+            </div>
+
+            <!-- Dynamic Bar Chart -->
+            <div id="activityChartContainer" class="h-32 flex items-end justify-between gap-4 pt-6 border-b border-primary/10 pb-4 px-4">
+                <!-- Bars injected dynamically by JS -->
+            </div>
+        </div>
+
+        <!-- MAIN DATA TABLE CARD -->
+        <div class="glass-panel rounded-[2.5rem] p-10 shadow-2xl space-y-8">
+            
+            <!-- Table Header Controls & Bulk Actions -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-primary/10 pb-6">
+                <!-- Filter Pills -->
+                <div class="flex items-center gap-2 p-1 glass-input rounded-full">
+                    <button onclick="setFilter('all')" id="tabAll" class="px-6 py-2 rounded-full text-[10px] font-hanken font-bold uppercase tracking-widest transition-all bg-primary text-white shadow-md">
+                        All Leads
+                    </button>
+                    <button onclick="setFilter('today')" id="tabToday" class="px-6 py-2 rounded-full text-[10px] font-hanken font-bold uppercase tracking-widest text-primary/60 hover:text-primary transition-all">
+                        Today Only
+                    </button>
+                </div>
+
+                <!-- Bulk Actions Container -->
+                <div id="bulkActionsBar" class="hidden flex items-center gap-4 px-6 py-2 bg-white/40 border border-primary/10 rounded-full shadow-sm text-primary">
+                    <span id="selectedCount" class="font-hanken font-bold text-[10px] uppercase tracking-widest">0 Selected</span>
+                    <button onclick="deleteSelectedLeads()" class="px-4 py-1.5 hover:bg-error/10 text-error rounded-full text-[10px] font-bold transition-colors">
+                        Delete
+                    </button>
+                </div>
+
+                <!-- Record Count -->
+                <span id="recordCount" class="text-[10px] font-bold uppercase tracking-widest text-primary/40">
+                    Showing 0 records
+                </span>
+            </div>
+
+            <!-- TABLE -->
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[800px]">
+                    <thead>
+                        <tr class="text-[9px] font-hanken font-bold uppercase tracking-[0.2em] text-primary/40 border-b border-primary/10">
+                            <th class="py-4 px-4 w-10 text-center">
+                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" class="rounded-sm border-primary/20 bg-white/50 text-primary focus:ring-primary/20 cursor-pointer"/>
+                            </th>
+                            <th class="py-4 px-4">Client</th>
+                            <th class="py-4 px-4">Contact</th>
+                            <th class="py-4 px-4">Status</th>
+                            <th class="py-4 px-4">Submitted</th>
+                            <th class="py-4 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody" class="divide-y divide-primary/5 text-sm text-primary">
+                        <tr>
+                            <td colspan="6" class="py-16 text-center text-primary/40">
+                                <svg class="w-6 h-6 mx-auto text-primary/30 animate-spin mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                <p class="text-[10px] font-bold uppercase tracking-widest">Fetching records...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- SLIDE-OVER DETAIL INSPECTION DRAWER -->
+    <div id="drawerBackdrop" onclick="closeDrawer()" class="fixed inset-0 bg-[#f5f1e8]/60 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <div id="detailDrawer" class="fixed top-4 right-4 bottom-4 w-full max-w-md glass-panel rounded-[2rem] z-50 transform translate-x-[120%] transition-transform duration-500 p-8 flex flex-col shadow-2xl">
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between pb-6 border-b border-primary/10">
+            <h3 class="font-serif-refined text-2xl text-primary font-light">Lead Details</h3>
+            <button onclick="closeDrawer()" class="w-10 h-10 rounded-full glass-input flex items-center justify-center text-primary hover:bg-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Content Body -->
+        <div class="py-8 flex-1 space-y-8 overflow-y-auto custom-scrollbar pr-2">
+            <!-- Client Identity Card -->
+            <div class="flex items-center gap-5">
+                <div id="drawerAvatar" class="w-16 h-16 rounded-full glass-input text-primary font-serif-refined text-xl flex items-center justify-center shadow-inner">
+                    --
+                </div>
+                <div>
+                    <h4 id="drawerName" class="text-xl font-bold text-primary">--</h4>
+                    <span id="drawerId" class="text-[10px] text-primary/50 font-mono tracking-widest uppercase font-bold">ID #--</span>
+                </div>
+            </div>
+
+            <!-- Details Field Group -->
+            <div class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-[9px] uppercase font-bold text-primary/40 tracking-[0.2em] pl-4">Phone Contact</label>
+                    <div class="glass-input rounded-2xl p-4 flex items-center justify-between">
+                        <span id="drawerPhone" class="font-mono text-primary text-sm font-bold">--</span>
+                        <button onclick="copyDrawerPhone()" class="px-4 py-1.5 hover:bg-white text-primary rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[9px] uppercase font-bold text-primary/40 tracking-[0.2em] pl-4">Submission Time</label>
+                    <div class="glass-input rounded-2xl p-4">
+                        <div id="drawerTimestamp" class="text-primary text-sm font-bold">--</div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[9px] uppercase font-bold text-primary/40 tracking-[0.2em] pl-4">Pipeline Status</label>
+                    <select id="drawerStatusSelect" onchange="updateLeadStatusFromDrawer()" class="w-full glass-input rounded-2xl p-4 text-sm font-bold text-primary focus:outline-none appearance-none cursor-pointer">
+                        <option value="New Lead 🟢">New Lead 🟢</option>
+                        <option value="In Progress 🔵">In Progress 🔵</option>
+                        <option value="Contacted 📞">Contacted 📞</option>
+                        <option value="Qualified 🟣">Qualified 🟣</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawer Footer Actions -->
+        <div class="pt-6 border-t border-primary/10 flex flex-col gap-4">
+            <a id="drawerCallBtn" href="#" class="w-full py-4 bg-primary text-white font-hanken font-bold text-[10px] uppercase tracking-[0.2em] rounded-full text-center shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl flex items-center justify-center gap-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                Call Client Now
+            </a>
+            <button id="drawerDeleteBtn" onclick="window.deleteLeadFromDrawer()" class="w-full py-4 text-error font-hanken font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-error/10 rounded-full transition-colors">
+                Delete Record
+            </button>
+        </div>
+    </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDYdTCripHL3z68_ok_3weUp34yvhD6zLk",
+  authDomain: "real-estate-78412.firebaseapp.com",
+  projectId: "real-estate-78412",
+  storageBucket: "real-estate-78412.firebasestorage.app",
+  messagingSenderId: "846988109657",
+  appId: "1:846988109657:web:ebf3f52bc25153c306ce48"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.allLeads = [];
+window.selectedLeadIds = new Set();
+window.currentFilter = 'all';
+window.currentActiveLead = null;
+
+// Listen to leads in real-time
+onSnapshot(query(collection(db, "leads"), orderBy("created_at", "desc")), (snapshot) => {
+    window.allLeads = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Calculate stats
+    const total = window.allLeads.length;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const today = window.allLeads.filter(l => {
+        if (!l.created_at) return false;
+        const d = l.created_at.toDate ? l.created_at.toDate() : new Date(l.created_at);
+        return d.toISOString().slice(0, 10) === todayStr;
+    }).length;
+
+    document.getElementById('statTotal').innerText = total;
+    document.getElementById('statToday').innerText = today;
+    document.getElementById('statActiveCount').innerText = `${total} Leads`;
+
+    window.applyFilters();
+});
+
+window.loadDashboardData = function(manual = false) {
+    if (manual) window.showToast("Syncing with Firebase...", "info");
+};
+
+window.setFilter = function(filter) {
+    window.currentFilter = filter;
+    document.querySelectorAll('[data-purpose="filter-btn"]').forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-white');
+        btn.classList.add('bg-white/50', 'text-primary/60');
+    });
+    
+    const activeBtn = document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
+    if(activeBtn) {
+        activeBtn.classList.remove('bg-white/50', 'text-primary/60');
+        activeBtn.classList.add('bg-primary', 'text-white');
+    }
+    
+    window.applyFilters();
+};
+
+window.applyFilters = function() {
+    const queryStr = document.getElementById('globalSearch').value.toLowerCase();
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    let filtered = window.allLeads;
+
+    if (window.currentFilter === 'today') {
+        filtered = filtered.filter(l => {
+            if (!l.created_at) return false;
+            const d = l.created_at.toDate ? l.created_at.toDate() : new Date(l.created_at);
+            return d.toISOString().slice(0, 10) === todayStr;
+        });
+    }
+
+    if (queryStr) {
+        filtered = filtered.filter(l => 
+            (l.name && l.name.toLowerCase().includes(queryStr)) || 
+            (l.mobile && l.mobile.toLowerCase().includes(queryStr))
+        );
+    }
+
+    window.renderTable(filtered);
+    window.renderActivityChart(filtered);
+};
+
+window.renderTable = function(leads) {
+    const tbody = document.getElementById('leadsTableBody');
+    const recordCount = document.getElementById('recordCount');
+    
+    recordCount.innerText = `Showing ${leads.length} of ${window.allLeads.length} leads`;
+
+    if (leads.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="py-24 text-center text-primary/40 glass-panel rounded-[2rem]">
+                    <svg class="w-10 h-10 mx-auto text-primary/20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    <p class="text-[10px] font-bold uppercase tracking-widest">No leads found</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = leads.map(lead => {
+        const initials = window.getInitials(lead.name);
+        const isChecked = window.selectedLeadIds.has(lead.id) ? 'checked' : '';
+        const currentStatus = lead.status || 'New Lead 🟢';
+
+        return `
+        <tr class="hover:bg-white/40 transition-colors group cursor-pointer" onclick="window.openDrawer('${lead.id}')">
+            <td class="py-4 px-4 text-center" onclick="event.stopPropagation()">
+                <input type="checkbox" onchange="window.toggleSelectLead('${lead.id}', this.checked)" ${isChecked} class="rounded-sm border-primary/20 bg-white/50 text-primary focus:ring-primary/20 cursor-pointer"/>
+            </td>
+            <td class="py-4 px-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full glass-input text-primary font-serif-refined flex items-center justify-center flex-shrink-0 shadow-inner">
+                        ${initials}
+                    </div>
+                    <div>
+                        <div class="font-bold text-primary group-hover:text-primary/70 transition-colors">${window.escapeHtml(lead.name)}</div>
+                        <div class="text-[9px] uppercase tracking-widest font-bold text-primary/40 font-mono" title="${lead.id}">ID #${lead.id.slice(0, 6)}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="py-4 px-4">
+                <span class="font-mono text-primary font-bold text-sm bg-white/50 px-3 py-1.5 rounded-full border border-primary/10">${window.escapeHtml(lead.mobile)}</span>
+            </td>
+            <td class="py-4 px-4" onclick="event.stopPropagation()">
+                <select onchange="window.updateStatus('${lead.id}', this.value)" class="glass-input rounded-full px-4 py-2 text-[11px] font-bold text-primary focus:outline-none appearance-none cursor-pointer">
+                    <option value="New Lead 🟢" ${currentStatus === 'New Lead 🟢' ? 'selected' : ''}>New Lead 🟢</option>
+                    <option value="In Progress 🔵" ${currentStatus === 'In Progress 🔵' ? 'selected' : ''}>In Progress 🔵</option>
+                    <option value="Contacted 📞" ${currentStatus === 'Contacted 📞' ? 'selected' : ''}>Contacted 📞</option>
+                    <option value="Qualified 🟣" ${currentStatus === 'Qualified 🟣' ? 'selected' : ''}>Qualified 🟣</option>
+                </select>
+            </td>
+            <td class="py-4 px-4 text-primary/60 font-medium text-xs">
+                ${window.formatDate(lead.created_at)}
+            </td>
+            <td class="py-4 px-4 text-right" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-end gap-3">
+                    <a href="tel:${window.escapeHtml(lead.mobile)}" class="px-4 py-2 bg-primary/5 hover:bg-primary/10 text-primary rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors border border-primary/10">
+                        Call
+                    </a>
+                    <button onclick="window.deleteLead('${lead.id}')" class="w-8 h-8 rounded-full hover:bg-error/10 text-primary/30 hover:text-error flex items-center justify-center transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+    }).join('');
+};
+
+window.renderActivityChart = function(leads) {
+    const container = document.getElementById('activityChartContainer');
+    if (!container) return;
+
+    const days = 7;
+    const today = new Date();
+    const last7Days = [];
+    const dateLabels = [];
+    
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        last7Days.push(d.toISOString().slice(0, 10));
+        if (i === 0) dateLabels.push("Today");
+        else dateLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    }
+
+    const tally = Array(days).fill(0);
+    leads.forEach(lead => {
+        if (!lead.created_at) return;
+        const d = lead.created_at.toDate ? lead.created_at.toDate() : new Date(lead.created_at);
+        const leadDate = d.toISOString().slice(0, 10);
+        const index = last7Days.indexOf(leadDate);
+        if (index !== -1) tally[index]++;
+    });
+
+    const maxCount = Math.max(...tally, 1);
+    
+    container.innerHTML = tally.map((count, index) => {
+        let heightPercent = Math.max((count / maxCount) * 100, 5); 
+        const isToday = index === days - 1;
+        const barClass = isToday 
+            ? "w-full bg-primary text-white shadow-lg rounded-t-xl transition-all duration-700"
+            : "w-full bg-primary/10 transition-all duration-700 rounded-t-xl group-hover:bg-primary/20";
+        const textClass = isToday
+            ? "text-[9px] text-primary font-bold uppercase tracking-widest whitespace-nowrap"
+            : "text-[9px] text-primary/40 font-bold uppercase tracking-widest whitespace-nowrap group-hover:text-primary/60 transition-colors";
+
+        return `
+            <div class="flex-1 flex flex-col items-center justify-end group h-full relative cursor-pointer">
+                <div class="absolute -top-8 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg whitespace-nowrap">
+                    ${count} Lead${count !== 1 ? 's' : ''}
+                </div>
+                <div class="w-full flex items-end justify-center h-full">
+                    <div class="${barClass}" style="height: ${heightPercent}%"></div>
+                </div>
+                <div class="mt-3">
+                    <span class="${textClass}">${dateLabels[index]}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.toggleSelectLead = function(id, checked) {
+    if (checked) window.selectedLeadIds.add(id);
+    else window.selectedLeadIds.delete(id);
+    window.updateBulkBar();
+};
+
+window.toggleSelectAll = function() {
+    const selectAll = document.getElementById('selectAll').checked;
+    window.selectedLeadIds.clear();
+    if (selectAll) {
+        window.allLeads.forEach(l => window.selectedLeadIds.add(l.id));
+    }
+    window.applyFilters();
+    window.updateBulkBar();
+};
+
+window.updateBulkBar = function() {
+    const bulkBar = document.getElementById('bulkActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    if (window.selectedLeadIds.size > 0) {
+        bulkBar.classList.remove('hidden');
+        selectedCount.innerText = `${window.selectedLeadIds.size} Selected`;
+    } else {
+        bulkBar.classList.add('hidden');
+    }
+};
+
+window.deleteSelectedLeads = async function() {
+    if (!confirm(`Delete ${window.selectedLeadIds.size} selected leads?`)) return;
+
+    try {
+        for (let id of window.selectedLeadIds) {
+            await deleteDoc(doc(db, "leads", id));
+        }
+        window.selectedLeadIds.clear();
+        window.updateBulkBar();
+        window.showToast('Selected leads deleted', 'success');
+    } catch (e) {
+        console.error(e);
+        window.showToast('Failed to delete leads', 'error');
+    }
+};
+
+window.updateStatus = async function(id, newStatus) {
+    try {
+        await updateDoc(doc(db, "leads", id), { status: newStatus });
+        window.showToast(`Status updated: ${newStatus}`, 'info');
+    } catch (e) {
+        console.error(e);
+        window.showToast('Failed to update status', 'error');
+    }
+};
+
+window.openDrawer = function(id) {
+    const lead = window.allLeads.find(l => l.id === id);
+    if (!lead) return;
+    window.currentActiveLead = lead;
+
+    document.getElementById('drawerAvatar').innerText = window.getInitials(lead.name);
+    document.getElementById('drawerName').innerText = lead.name;
+    document.getElementById('drawerId').innerText = `ID #${lead.id.slice(0, 6)}`;
+    document.getElementById('drawerPhone').innerText = lead.mobile;
+    document.getElementById('drawerTimestamp').innerText = window.formatDate(lead.created_at);
+    document.getElementById('drawerCallBtn').href = `tel:${lead.mobile}`;
+    document.getElementById('drawerStatusSelect').value = lead.status || 'New Lead 🟢';
+
+    document.getElementById('drawerBackdrop').classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('detailDrawer').classList.remove('translate-x-[120%]');
+};
+
+window.closeDrawer = function() {
+    document.getElementById('drawerBackdrop').classList.add('opacity-0', 'pointer-events-none');
+    document.getElementById('detailDrawer').classList.add('translate-x-[120%]');
+};
+
+window.copyDrawerPhone = function() {
+    if (window.currentActiveLead) {
+        navigator.clipboard.writeText(window.currentActiveLead.mobile);
+        window.showToast(`Copied ${window.currentActiveLead.mobile}`, 'success');
+    }
+};
+
+window.updateLeadStatusFromDrawer = function() {
+    if (window.currentActiveLead) {
+        const val = document.getElementById('drawerStatusSelect').value;
+        window.updateStatus(window.currentActiveLead.id, val);
+    }
+};
+
+window.deleteLeadFromDrawer = async function() {
+    if (window.currentActiveLead) {
+        await window.deleteLead(window.currentActiveLead.id);
+        window.closeDrawer();
+    }
+};
+
+window.deleteLead = async function(id) {
+    if (!confirm(`Are you sure you want to delete lead #${id.slice(0,6)}?`)) return;
+
+    try {
+        await deleteDoc(doc(db, "leads", id));
+        window.showToast(`Lead deleted`, 'success');
+    } catch (err) {
+        console.error(err);
+        window.showToast('Error deleting from database', 'error');
+    }
+};
+
+window.exportToCSV = function() {
+    if (window.allLeads.length === 0) {
+        window.showToast('No records available to export', 'error');
+        return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,ID,Name,Mobile,Submitted_At,Status\n";
+    window.allLeads.forEach(l => {
+        const dateStr = l.created_at.toDate ? l.created_at.toDate().toISOString() : l.created_at;
+        const status = l.status || "New Lead";
+        csvContent += `${l.id},"${l.name.replace(/"/g, '""')}","${l.mobile}",${dateStr},${status}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Leads_Export_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.showToast('Exported CSV file successfully!', 'success');
+};
+
+window.showToast = function(msg, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `glass-panel px-8 py-4 rounded-full shadow-lg toast-enter pointer-events-auto flex items-center justify-center gap-3`;
+    
+    toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${type === 'error' ? 'bg-error' : 'bg-primary'}"></span>
+        <span class="text-[10px] font-hanken font-bold uppercase tracking-[0.1em] text-primary">${window.escapeHtml(msg)}</span>
+    `;
+
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.replace('toast-enter', 'toast-exit');
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+};
+
+window.getInitials = function(name) {
+    if (!name) return 'CL';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+};
+
+window.escapeHtml = function(text) {
+    if (!text) return '';
+    return text.toString().replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+};
+
+window.formatDate = function(dateInput) {
+    if (!dateInput) return 'N/A';
+    try {
+        const d = dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
+        return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+        return dateInput;
+    }
+};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        document.getElementById('globalSearch')?.focus();
+    }
+});
+</script>
+
+</body>
+</html>

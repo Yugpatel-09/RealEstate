@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Request Access - A. MANGUKIYA</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#152134",
+                        "sand-accent": "#F7E6CC",
+                        "background": "#fdf9eb",
+                        "surface": "#fdf9eb",
+                        "on-background": "#1c1c14",
+                        "on-surface": "#1c1c14",
+                        "outline-variant": "#c5c6cd"
+                    },
+                    "fontFamily": {
+                        "hanken": ["Hanken Grotesk", "sans-serif"],
+                        "manrope": ["Manrope", "sans-serif"],
+                        "serif-refined": ["Playfair Display", "serif"]
+                    }
+                }
+            }
+        }
+</script>
+<style>
+@keyframes fade-in {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: fade-in 0.8s ease-out forwards;
+}
+</style>
+</head>
+<body class="bg-background text-on-background font-manrope selection:bg-sand-accent selection:text-primary min-h-screen flex flex-col">
+
+<!-- BEGIN: Navigation -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center justify-between px-8 md:px-16 py-5 max-w-[1440px] mx-auto">
+<a class="flex items-center gap-4 group" href="index.html">
+<div class="w-10 h-10 flex items-center justify-center transition-transform duration-500 group-hover:rotate-180">
+<svg class="w-full h-full text-primary fill-current" viewbox="0 0 100 100">
+<path d="M50 0 L55 45 L100 50 L55 55 L50 100 L45 55 L0 50 L45 45 Z"></path>
+<circle cx="50" cy="50" fill="white" r="8"></circle>
+</svg>
+</div>
+<div class="leading-none font-hanken font-bold uppercase tracking-[0.2em] text-[10px] text-primary">
+                A.<br/>MANGUKIYA
+            </div>
+</a>
+<div class="hidden md:flex items-center gap-12 font-hanken text-[13px] font-semibold tracking-[0.1em] uppercase">
+<a class="relative after:absolute after:bottom-[-4px] after:left-0 after:h-[1px] after:w-0 hover:after:w-full transition-all duration-300 opacity-60 hover:opacity-100 after:bg-primary" href="index.html">Home</a>
+</div>
+<div class="flex items-center gap-6">
+<a class="px-8 py-3 bg-primary text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-primary/90 transition-all shadow-sm hover:shadow-md" href="index.html">
+                Back to Site
+            </a>
+</div>
+</div>
+</nav>
+<!-- END: Navigation -->
+
+<!-- Main Signup Content -->
+<main class="flex-grow flex items-center justify-center pt-24 pb-12 px-4 relative overflow-hidden">
+    <!-- Background element -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,rgba(247,230,204,0.4)_0%,transparent_60%)] pointer-events-none"></div>
+    
+    <div class="w-full max-w-lg relative z-10 bg-white/50 backdrop-blur-xl border border-white/20 p-10 md:p-12 rounded-2xl shadow-[0_20px_40px_rgba(21,33,52,0.05)] text-center animate-fade-in opacity-0" style="animation-delay: 100ms;">
+        <h1 class="text-4xl font-serif-refined text-primary mb-2">Request Access</h1>
+        <p class="text-sm font-light text-primary/60 mb-8">Join our exclusive network for curated luxury real estate opportunities.</p>
+        
+        <form id="signupForm" onsubmit="handleSignupSubmit(event)" class="flex flex-col gap-6 text-left">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] uppercase tracking-widest font-bold text-primary/70">First Name</label>
+                    <input id="firstName" class="w-full bg-transparent border-b border-primary/20 py-2 focus:outline-none focus:border-primary transition-colors font-light tracking-wide placeholder:opacity-30 placeholder:text-primary" placeholder="Jane" type="text" required/>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] uppercase tracking-widest font-bold text-primary/70">Last Name</label>
+                    <input id="lastName" class="w-full bg-transparent border-b border-primary/20 py-2 focus:outline-none focus:border-primary transition-colors font-light tracking-wide placeholder:opacity-30 placeholder:text-primary" placeholder="Doe" type="text" required/>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-2">
+                <label class="text-[10px] uppercase tracking-widest font-bold text-primary/70">Email Address</label>
+                <input id="signupEmail" class="w-full bg-transparent border-b border-primary/20 py-2 focus:outline-none focus:border-primary transition-colors font-light tracking-wide placeholder:opacity-30 placeholder:text-primary" placeholder="name@example.com" type="email" required/>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-[10px] uppercase tracking-widest font-bold text-primary/70">Phone Number</label>
+                <input id="signupMobile" class="w-full bg-transparent border-b border-primary/20 py-2 focus:outline-none focus:border-primary transition-colors font-light tracking-wide placeholder:opacity-30 placeholder:text-primary" placeholder="+1 (555) 000-0000" type="tel" required/>
+            </div>
+            
+            <div class="flex flex-col gap-2">
+                <label class="text-[10px] uppercase tracking-widest font-bold text-primary/70">Create Password</label>
+                <input id="signupPassword" class="w-full bg-transparent border-b border-primary/20 py-2 focus:outline-none focus:border-primary transition-colors font-light tracking-wide placeholder:opacity-30 placeholder:text-primary" placeholder="••••••••" type="password" required/>
+            </div>
+            
+            <button id="submitBtn" class="mt-4 w-full bg-primary text-white py-4 rounded-lg font-hanken font-bold text-xs uppercase tracking-[0.2em] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300" type="submit">
+                Submit Request
+            </button>
+        </form>
+
+        <div id="signupSuccess" class="hidden mt-4 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 py-3 px-4 rounded-lg">
+            ✓ Registration submitted! Account created. Redirecting to login...
+        </div>
+
+<script>
+async function handleSignupSubmit(e) {
+    if (e) e.preventDefault();
+    const submitBtn = document.getElementById('submitBtn');
+    const fname = document.getElementById('firstName').value.trim();
+    const lname = document.getElementById('lastName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const mobile = document.getElementById('signupMobile').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+    const successMsg = document.getElementById('signupSuccess');
+
+    const fullName = `${fname} ${lname}`.trim() || email;
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Creating Account...";
+
+    try {
+        const res = await fetch('/api/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: fullName, email, mobile: mobile || email, password })
+        });
+
+        if (res.ok) {
+            submitBtn.innerText = "Account Created!";
+            submitBtn.classList.remove('bg-primary');
+            submitBtn.classList.add('bg-emerald-600');
+            successMsg.classList.remove('hidden');
+            
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        } else {
+            const data = await res.json();
+            alert(data.message || 'Failed to register. Please check details.');
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Request";
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error connecting to server. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Submit Request";
+    }
+}
+</script>
+        
+        <p class="mt-8 text-xs font-light text-primary/60">
+            Already a member? <a href="login.html" class="font-medium text-primary hover:underline">Sign in</a>
+        </p>
+    </div>
+</main>
+
+</body>
+</html>

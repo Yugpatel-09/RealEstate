@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin - A. MANGUKIYA</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700&family=Playfair+Display:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#152134",
+                        "sand-accent": "#F7E6CC",
+                        "surface-dim": "#dedacd",
+                        "surface": "#fdf9eb",
+                        "background": "#fdf9eb",
+                        "error": "#ba1a1a"
+                    },
+                    "fontFamily": {
+                        "hanken": ["Hanken Grotesk", "sans-serif"],
+                        "manrope": ["Manrope", "sans-serif"],
+                        "serif-refined": ["Playfair Display", "serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .toast-enter { animation: toast-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .toast-exit { animation: toast-slide-out 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes toast-slide-in {
+            0% { transform: translateY(-100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes toast-slide-out {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 8px 32px rgba(21, 33, 52, 0.04), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        
+        .glass-input {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: inset 0 2px 4px rgba(21, 33, 52, 0.02);
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(21, 33, 52, 0.2);
+            box-shadow: 0 0 0 4px rgba(21, 33, 52, 0.05);
+        }
+        
+        /* Floating Dock Item Active State */
+        .dock-item.active {
+            background: rgba(21, 33, 52, 1);
+            color: white;
+            box-shadow: 0 4px 12px rgba(21, 33, 52, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-[#f5f1e8] text-primary font-manrope selection:bg-primary selection:text-white min-h-screen relative overflow-x-hidden">
+
+    <!-- Ambient Background Mesh -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-sand-accent/40 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-[ken-burns_15s_ease-in-out_infinite_alternate]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-white/60 rounded-full mix-blend-overlay filter blur-[120px] opacity-80 animate-[ken-burns_20s_ease-in-out_infinite_alternate_reverse]"></div>
+    </div>
+
+    <!-- FLOATING DOCK (Navigation) -->
+    <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 glass-panel rounded-full p-2 flex items-center gap-2">
+        <div class="px-4 pr-6 flex items-center justify-center border-r border-primary/10">
+            <svg class="w-6 h-6 text-primary" viewbox="0 0 100 100">
+                <path d="M50 0 L55 45 L100 50 L55 55 L50 100 L45 55 L0 50 L45 45 Z" fill="currentColor"></path>
+                <circle cx="50" cy="50" fill="#f5f1e8" r="8"></circle>
+            </svg>
+        </div>
+        
+        <button onclick="switchAdminTab('overview')" id="navOverview" class="dock-item active px-6 py-3 rounded-full font-hanken font-bold text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center gap-2 hover:bg-white/50 text-primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            Overview
+        </button>
+        
+        <button onclick="switchAdminTab('add')" id="navAdd" class="dock-item px-6 py-3 rounded-full font-hanken font-bold text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center gap-2 hover:bg-white/50 text-primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"></path></svg>
+            Publish
+        </button>
+        
+        <button onclick="switchAdminTab('manage')" id="navManage" class="dock-item px-6 py-3 rounded-full font-hanken font-bold text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center gap-2 hover:bg-white/50 text-primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            Manage
+        </button>
+        
+        <div class="px-2 pl-4 border-l border-primary/10">
+            <a href="user-dashboard.html" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/50 transition-colors text-primary" title="Exit to Dashboard">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="relative z-10 max-w-5xl mx-auto pt-24 pb-40 px-6 min-h-screen">
+        
+        <!-- HEADER -->
+        <header class="mb-16 text-center">
+            <h1 class="text-4xl md:text-6xl font-serif-refined font-light tracking-tight mb-4" id="pageTitle">Overview</h1>
+            <p class="text-primary/40 font-hanken font-bold uppercase tracking-[0.3em] text-xs" id="pageSubtitle">Platform Statistics</p>
+        </header>
+
+        <!-- OVERVIEW TAB -->
+        <div id="tabOverview" class="block animate-fade-in space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Stat Card 1 -->
+                <div class="glass-panel rounded-[2rem] p-10 flex flex-col items-center justify-center text-center">
+                    <span class="text-[9px] font-hanken font-bold uppercase tracking-[0.2em] text-primary/50 mb-4">Total Portfolio</span>
+                    <div class="text-7xl font-serif-refined font-light text-primary" id="statTotal">0</div>
+                </div>
+                
+                <!-- Stat Card 2 -->
+                <div class="glass-panel rounded-[2rem] p-10 flex flex-col items-center justify-center text-center">
+                    <span class="text-[9px] font-hanken font-bold uppercase tracking-[0.2em] text-primary/50 mb-4">Residential</span>
+                    <div class="text-7xl font-serif-refined font-light text-primary" id="statResidential">0</div>
+                </div>
+                
+                <!-- Stat Card 3 -->
+                <div class="glass-panel rounded-[2rem] p-10 flex flex-col items-center justify-center text-center">
+                    <span class="text-[9px] font-hanken font-bold uppercase tracking-[0.2em] text-primary/50 mb-4">Commercial</span>
+                    <div class="text-7xl font-serif-refined font-light text-primary" id="statCommercial">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ADD PROPERTY TAB -->
+        <div id="tabAdd" class="hidden animate-fade-in">
+            <form id="addPropertyForm" class="glass-panel rounded-[2.5rem] p-10 md:p-16 space-y-12" onsubmit="submitNewProperty(event)">
+                
+                <!-- Section 1 -->
+                <div class="space-y-8">
+                    <div class="flex items-center gap-4 border-b border-primary/10 pb-4">
+                        <span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-serif-refined italic">1</span>
+                        <h3 class="font-serif-refined text-2xl">Identity</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2 md:col-span-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Property Name</label>
+                            <input type="text" id="newPropName" required placeholder="e.g. Skyline Residency" class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary placeholder:text-primary/30">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Country</label>
+                            <select id="newPropCountry" onchange="updateLocalities()" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary appearance-none">
+                                <option value="" disabled selected>Select Country</option>
+                                <option value="India">India</option>
+                                <option value="USA">USA</option>
+                                <option value="UK">UK</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Australia">Australia</option>
+                                <option value="UAE">UAE</option>
+                                <option value="Singapore">Singapore</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Locality</label>
+                            <select id="newPropLocation" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary appearance-none">
+                                <option value="" disabled selected>Select Locality</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="space-y-8">
+                    <div class="flex items-center gap-4 border-b border-primary/10 pb-4">
+                        <span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-serif-refined italic">2</span>
+                        <h3 class="font-serif-refined text-2xl">Specifications</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Type</label>
+                            <select id="newPropType" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary appearance-none">
+                                <option value="Residential">Residential</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Rental">Rental</option>
+                                <option value="Villa">Villa</option>
+                                <option value="Apartment">Apartment</option>
+                                <option value="Plot">Plot</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-2 md:col-span-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Price Display Text</label>
+                            <input type="text" id="newPropPrice" required placeholder="e.g. ₹ 2.5 Cr" class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary placeholder:text-primary/30">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Bedrooms</label>
+                            <input type="number" id="newPropBeds" class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Bathrooms</label>
+                            <input type="number" id="newPropBaths" class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Square Feet</label>
+                            <input type="text" id="newPropSqft" class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary">
+                        </div>
+                        <div class="flex flex-col gap-2 md:col-span-3">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Budget Filter Category</label>
+                            <select id="newPropRange" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary appearance-none">
+                                <option value="budget">Under ₹50L</option>
+                                <option value="mid">₹50L - ₹1Cr</option>
+                                <option value="premium">₹1Cr - ₹3Cr</option>
+                                <option value="luxury">₹3Cr+</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="space-y-8">
+                    <div class="flex items-center gap-4 border-b border-primary/10 pb-4">
+                        <span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-serif-refined italic">3</span>
+                        <h3 class="font-serif-refined text-2xl">Media</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Property Image</label>
+                            <input type="file" id="newPropImg" accept="image/*" required class="glass-input rounded-2xl px-4 py-3 text-sm focus:outline-none text-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:uppercase file:tracking-widest file:bg-primary file:text-white hover:file:bg-primary/90 cursor-pointer">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Highlight Tag</label>
+                            <input type="text" id="newPropTag" placeholder="e.g. Luxury" class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary placeholder:text-primary/30">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Action -->
+                <div class="flex justify-center pt-8">
+                    <button type="submit" class="px-16 py-5 bg-primary text-white rounded-full font-hanken text-[10px] font-bold uppercase tracking-[0.2em] transition-all shadow-[0_8px_20px_rgba(21,33,52,0.15)] hover:scale-105 hover:shadow-[0_12px_24px_rgba(21,33,52,0.2)]">
+                        Publish to Gallery
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- MANAGE PROPERTIES TAB -->
+        <div id="tabManage" class="hidden animate-fade-in">
+            
+            <div class="flex justify-end mb-6">
+                <button onclick="deleteSelected()" id="btnDeleteSelected" class="px-6 py-3 glass-panel rounded-full text-error font-hanken text-[9px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 pointer-events-none opacity-50" disabled>
+                    Delete Selected
+                </button>
+            </div>
+            
+            <div id="propertyList" class="space-y-4">
+                <!-- Properties injected by JS -->
+            </div>
+        </div>
+        
+    </main>
+
+    <!-- EDIT PROPERTY MODAL -->
+    <div id="editPropertyModal" class="fixed inset-0 z-[200] bg-[#f5f1e8]/80 backdrop-blur-md hidden items-center justify-center p-4 transition-opacity">
+        <div class="glass-panel rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="px-10 py-8 border-b border-white/40 sticky top-0 bg-white/30 backdrop-blur-xl z-10 flex items-center justify-between">
+                <h3 class="font-serif-refined text-2xl font-light">Edit Masterpiece</h3>
+                <button onclick="closeEditModal()" class="w-10 h-10 rounded-full glass-input flex items-center justify-center hover:bg-white text-primary transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-10">
+                <form id="editPropertyForm" class="space-y-8" onsubmit="submitEditProperty(event)">
+                    <input type="hidden" id="editPropId">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2 md:col-span-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Property Name</label>
+                            <input type="text" id="editPropName" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary">
+                        </div>
+                        
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Country</label>
+                            <select id="editPropCountry" onchange="updateEditLocalities()" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary appearance-none">
+                                <option value="India">India</option>
+                                <option value="USA">USA</option>
+                                <option value="UK">UK</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Australia">Australia</option>
+                                <option value="UAE">UAE</option>
+                                <option value="Singapore">Singapore</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Locality (City)</label>
+                            <select id="editPropLocation" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary appearance-none"></select>
+                        </div>
+                        
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Type</label>
+                            <select id="editPropType" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary appearance-none">
+                                <option value="Residential">Residential</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Rental">Rental</option>
+                                <option value="Villa">Villa</option>
+                                <option value="Apartment">Apartment</option>
+                                <option value="Plot">Plot</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase tracking-widest font-bold text-primary/50 pl-4">Price</label>
+                            <input type="text" id="editPropPrice" required class="glass-input rounded-2xl px-6 py-4 text-sm focus:outline-none text-primary">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center pt-8">
+                        <button type="submit" class="px-16 py-5 bg-primary text-white rounded-full font-hanken text-[10px] font-bold uppercase tracking-[0.2em] transition-all shadow-[0_8px_20px_rgba(21,33,52,0.15)] hover:scale-105">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed top-8 right-1/2 translate-x-1/2 z-[300] flex flex-col gap-3 pointer-events-none"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDYdTCripHL3z68_ok_3weUp34yvhD6zLk",
+      authDomain: "real-estate-78412.firebaseapp.com",
+      projectId: "real-estate-78412",
+      storageBucket: "real-estate-78412.firebasestorage.app",
+      messagingSenderId: "846988109657",
+      appId: "1:846988109657:web:ebf3f52bc25153c306ce48"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.customProps = [];
+    let selectedIds = new Set();
+
+    const LOCATION_MAP = {
+        "India": ["Mumbai", "Delhi", "Bangalore", "Surat", "Vesu", "Adajan", "Varachha"],
+        "USA": ["New York", "Los Angeles", "Chicago", "Miami", "San Francisco"],
+        "UK": ["London", "Manchester", "Birmingham", "Edinburgh"],
+        "Canada": ["Toronto", "Vancouver", "Montreal", "Calgary"],
+        "Australia": ["Sydney", "Melbourne", "Brisbane", "Perth"],
+        "UAE": ["Dubai", "Abu Dhabi", "Sharjah"],
+        "Singapore": ["Central Region", "East Region", "North Region"]
+    };
+
+    // Real-time listener for properties
+    onSnapshot(query(collection(db, "properties"), orderBy("created_at", "desc")), (snapshot) => {
+        window.customProps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        window.renderPropertyList();
+        window.calculateStats();
+    });
+
+    window.showToast = function(message) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `glass-panel px-8 py-4 rounded-full shadow-lg toast-enter pointer-events-auto flex items-center justify-center gap-3`;
+        toast.innerHTML = `<span class="text-xs font-hanken font-bold uppercase tracking-[0.1em]">${message}</span>`;
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.replace('toast-enter', 'toast-exit');
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    };
+
+    window.switchAdminTab = function(tab) {
+        const tabs = ['overview', 'add', 'manage'];
+        const titles = {
+            'overview': { title: 'Overview', sub: 'Platform Statistics' },
+            'add': { title: 'Publish', sub: 'Add a Masterpiece' },
+            'manage': { title: 'Gallery', sub: 'Manage Listings' }
+        };
+        
+        tabs.forEach(t => {
+            const btn = document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}`);
+            const section = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+            
+            if (t === tab) {
+                btn.classList.add('active');
+                btn.classList.remove('hover:bg-white/50');
+                section.classList.remove('hidden');
+                section.classList.add('block');
+            } else {
+                btn.classList.remove('active');
+                btn.classList.add('hover:bg-white/50');
+                section.classList.add('hidden');
+                section.classList.remove('block');
+            }
+        });
+        
+        document.getElementById('pageTitle').textContent = titles[tab].title;
+        document.getElementById('pageSubtitle').textContent = titles[tab].sub;
+    };
+
+    window.calculateStats = function() {
+        const props = window.customProps;
+        document.getElementById('statTotal').textContent = props.length;
+        document.getElementById('statResidential').textContent = props.filter(p => ['Residential', 'Villa', 'Apartment'].includes(p.type)).length;
+        document.getElementById('statCommercial').textContent = props.filter(p => ['Commercial', 'Rental', 'Plot'].includes(p.type)).length;
+    };
+
+    window.updateLocalities = function() {
+        const country = document.getElementById('newPropCountry').value;
+        const locSelect = document.getElementById('newPropLocation');
+        locSelect.innerHTML = '<option value="" disabled selected>Select Locality</option>';
+        if (country && LOCATION_MAP[country]) {
+            LOCATION_MAP[country].forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                opt.textContent = loc;
+                locSelect.appendChild(opt);
+            });
+        }
+    };
+
+    window.submitNewProperty = async function(e) {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "Publishing...";
+        
+        const fileInput = document.getElementById('newPropImg');
+        let imgDataUrl = '';
+        
+        if (fileInput.files && fileInput.files[0]) {
+            imgDataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (event) => resolve(event.target.result);
+                reader.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const newProp = {
+            name: document.getElementById('newPropName').value,
+            country: document.getElementById('newPropCountry').value,
+            type: document.getElementById('newPropType').value,
+            location: document.getElementById('newPropLocation').value,
+            price: document.getElementById('newPropPrice').value,
+            priceRange: document.getElementById('newPropRange').value,
+            beds: parseInt(document.getElementById('newPropBeds').value) || 0,
+            baths: parseInt(document.getElementById('newPropBaths').value) || 0,
+            sqft: document.getElementById('newPropSqft').value,
+            img: imgDataUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+            tag: document.getElementById('newPropTag').value || 'New',
+            created_at: Date.now()
+        };
+
+        try {
+            await addDoc(collection(db, "properties"), newProp);
+            document.getElementById('addPropertyForm').reset();
+            window.showToast("Published successfully to Firebase!");
+            window.switchAdminTab('manage');
+        } catch(err) {
+            console.error(err);
+            window.showToast("Failed to publish");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "Publish to Gallery";
+        }
+    };
+
+    window.renderPropertyList = function() {
+        const props = window.customProps;
+        const container = document.getElementById('propertyList');
+
+        if (props.length === 0) {
+            container.innerHTML = `<div class="text-center py-32 text-primary/40 glass-panel rounded-[2rem] font-light text-sm">Gallery is empty.</div>`;
+            return;
+        }
+
+        container.innerHTML = props.map(p => `
+            <div class="flex items-center gap-6 p-4 glass-panel rounded-full cursor-pointer transition-transform hover:scale-[1.01]" onclick="window.toggleSelection('${p.id}')">
+                <div class="pl-4">
+                    <div class="w-5 h-5 rounded-full border border-primary/20 flex items-center justify-center transition-colors" id="chk-ui-${p.id}">
+                        <div class="w-3 h-3 rounded-full ${selectedIds.has(p.id) ? 'bg-primary' : 'bg-transparent'} transition-colors"></div>
+                    </div>
+                </div>
+                <div class="w-16 h-16 rounded-full overflow-hidden relative flex-shrink-0 shadow-inner">
+                    <img src="${p.img}" class="w-full h-full object-cover" alt="${p.name}">
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-lg font-serif-refined font-light text-primary line-clamp-1">${p.name}</h4>
+                    <p class="text-[9px] font-hanken font-bold uppercase tracking-[0.2em] text-primary/40">${p.location}, ${p.country}</p>
+                </div>
+                <div class="font-manrope font-light text-primary pr-6 tracking-wide text-sm whitespace-nowrap hidden md:block">
+                    ${p.price}
+                </div>
+                <button onclick="window.openEditModal('${p.id}'); event.stopPropagation();" class="w-12 h-12 rounded-full glass-input flex items-center justify-center hover:bg-white text-primary transition-all mr-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                </button>
+            </div>
+        `).join('');
+    };
+
+    window.toggleSelection = function(id) {
+        if (selectedIds.has(id)) {
+            selectedIds.delete(id);
+        } else {
+            selectedIds.add(id);
+        }
+        window.renderPropertyList();
+        window.updateDeleteBtnState();
+    };
+
+    window.updateDeleteBtnState = function() {
+        const btn = document.getElementById('btnDeleteSelected');
+        if (selectedIds.size > 0) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'pointer-events-none');
+            btn.classList.add('hover:bg-error/10');
+            btn.innerHTML = `Delete (${selectedIds.size})`;
+        } else {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'pointer-events-none');
+            btn.classList.remove('hover:bg-error/10');
+            btn.innerHTML = `Delete Selected`;
+        }
+    };
+
+    window.deleteSelected = async function() {
+        if (selectedIds.size === 0) return;
+        if (!confirm(`Permanently delete ${selectedIds.size} property(ies) from database?`)) return;
+
+        const btn = document.getElementById('btnDeleteSelected');
+        btn.innerHTML = "Deleting...";
+        btn.disabled = true;
+
+        try {
+            for (const id of selectedIds) {
+                await deleteDoc(doc(db, "properties", id));
+            }
+            window.showToast(`Deleted ${selectedIds.size} listing(s)`);
+            selectedIds.clear();
+            window.updateDeleteBtnState();
+        } catch (err) {
+            console.error(err);
+            window.showToast("Failed to delete some listings");
+        }
+    };
+
+    window.updateEditLocalities = function(preselectLoc = '') {
+        const country = document.getElementById('editPropCountry').value;
+        const locSelect = document.getElementById('editPropLocation');
+        locSelect.innerHTML = '<option value="" disabled>Select Locality</option>';
+        if (country && LOCATION_MAP[country]) {
+            LOCATION_MAP[country].forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                opt.textContent = loc;
+                if (loc === preselectLoc) opt.selected = true;
+                locSelect.appendChild(opt);
+            });
+        }
+    };
+
+    window.openEditModal = function(id) {
+        const p = window.customProps.find(x => x.id === id);
+        if (!p) return;
+
+        document.getElementById('editPropId').value = p.id;
+        document.getElementById('editPropName').value = p.name;
+        document.getElementById('editPropCountry').value = p.country;
+        window.updateEditLocalities(p.location);
+        document.getElementById('editPropType').value = p.type;
+        document.getElementById('editPropPrice').value = p.price;
+        
+        document.getElementById('editPropertyModal').classList.remove('hidden');
+        document.getElementById('editPropertyModal').classList.add('flex');
+    };
+
+    window.closeEditModal = function() {
+        document.getElementById('editPropertyModal').classList.add('hidden');
+        document.getElementById('editPropertyModal').classList.remove('flex');
+    };
+
+    window.submitEditProperty = async function(e) {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = "Saving...";
+        submitBtn.disabled = true;
+
+        const id = document.getElementById('editPropId').value;
+        const docRef = doc(db, "properties", id);
+        
+        try {
+            await updateDoc(docRef, {
+                name: document.getElementById('editPropName').value,
+                country: document.getElementById('editPropCountry').value,
+                type: document.getElementById('editPropType').value,
+                location: document.getElementById('editPropLocation').value,
+                price: document.getElementById('editPropPrice').value,
+            });
+            window.closeEditModal();
+            window.showToast("Property updated in database");
+        } catch(err) {
+            console.error(err);
+            window.showToast("Failed to update property");
+        } finally {
+            submitBtn.innerHTML = "Save Changes";
+            submitBtn.disabled = false;
+        }
+    };
+</script>
+</body>
+</html>
