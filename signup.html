@@ -112,10 +112,26 @@
             ✓ Registration submitted! Account created. Redirecting to login...
         </div>
 
-<script>
-async function handleSignupSubmit(e) {
-    if (e) e.preventDefault();
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDYdTCripHL3z68_ok_3weUp34yvhD6zLk",
+    authDomain: "real-estate-78412.firebaseapp.com",
+    projectId: "real-estate-78412",
+    storageBucket: "real-estate-78412.firebasestorage.app",
+    messagingSenderId: "846988109657",
+    appId: "1:846988109657:web:ebf3f52bc25153c306ce48"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.handleSignupSubmit = async function(event) {
+    event.preventDefault();
     const submitBtn = document.getElementById('submitBtn');
+    
     const fname = document.getElementById('firstName').value.trim();
     const lname = document.getElementById('lastName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
@@ -129,30 +145,39 @@ async function handleSignupSubmit(e) {
     submitBtn.innerText = "Creating Account...";
 
     try {
-        const res = await fetch('/api/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: fullName, email, mobile: mobile || email, password })
-        });
-
-        if (res.ok) {
-            submitBtn.innerText = "Account Created!";
-            submitBtn.classList.remove('bg-primary');
-            submitBtn.classList.add('bg-emerald-600');
-            successMsg.classList.remove('hidden');
-            
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1500);
-        } else {
-            const data = await res.json();
-            alert(data.message || 'Failed to register. Please check details.');
+        // Check if user already exists
+        const q = query(collection(db, "users"), where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            alert("An account with this email already exists!");
             submitBtn.disabled = false;
             submitBtn.innerText = "Submit Request";
+            return;
         }
+
+        // Add new user to Firestore
+        await addDoc(collection(db, "users"), {
+            name: fullName,
+            email: email,
+            mobile: mobile || email,
+            password: password, // Note: In a real app, use Firebase Auth instead of storing raw passwords in Firestore
+            created_at: new Date().toISOString(),
+            role: 'client'
+        });
+
+        submitBtn.innerText = "Account Created!";
+        submitBtn.classList.remove('bg-primary');
+        submitBtn.classList.add('bg-emerald-600');
+        successMsg.classList.remove('hidden');
+        
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 1500);
+
     } catch (err) {
         console.error(err);
-        alert('Error connecting to server. Please try again.');
+        alert('Error connecting to database. Please try again.');
         submitBtn.disabled = false;
         submitBtn.innerText = "Submit Request";
     }

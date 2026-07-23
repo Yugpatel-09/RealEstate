@@ -114,9 +114,24 @@
     </div>
 </main>
 
-<script>
-async function handleLoginSubmit(e) {
-    if (e) e.preventDefault();
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDYdTCripHL3z68_ok_3weUp34yvhD6zLk",
+    authDomain: "real-estate-78412.firebaseapp.com",
+    projectId: "real-estate-78412",
+    storageBucket: "real-estate-78412.firebasestorage.app",
+    messagingSenderId: "846988109657",
+    appId: "1:846988109657:web:ebf3f52bc25153c306ce48"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.handleLoginSubmit = async function(event) {
+    event.preventDefault();
     const loginBtn = document.getElementById('loginBtn');
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
@@ -128,16 +143,20 @@ async function handleLoginSubmit(e) {
     loginBtn.innerText = "Authenticating...";
 
     try {
-        const res = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+        const q = query(collection(db, "users"), where("email", "==", email), where("password", "==", password));
+        const querySnapshot = await getDocs(q);
 
-        const data = await res.json();
-
-        if (res.ok && data.status === 'success') {
-            localStorage.setItem('currentUser', JSON.stringify(data.user));
+        if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            const userData = userDoc.data();
+            
+            localStorage.setItem('currentUser', JSON.stringify({
+                id: userDoc.id,
+                name: userData.name,
+                email: userData.email,
+                role: userData.role
+            }));
+            
             loginBtn.innerText = "Success!";
             loginBtn.classList.remove('bg-primary');
             loginBtn.classList.add('bg-emerald-600');
@@ -147,7 +166,7 @@ async function handleLoginSubmit(e) {
                 window.location.href = 'user-dashboard.html';
             }, 1200);
         } else {
-            errorMsg.innerText = `✕ ${data.message || 'Invalid email or password.'}`;
+            errorMsg.innerText = `✕ Invalid email or password.`;
             errorMsg.classList.remove('hidden');
             loginBtn.disabled = false;
             loginBtn.innerText = "Sign In";
