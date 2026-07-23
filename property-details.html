@@ -64,7 +64,7 @@ tailwind.config = {
         }
 
         import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js").then(({ initializeApp }) => {
-            import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(async ({ getFirestore, doc, getDoc }) => {
+            import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(async ({ getFirestore, doc, getDoc, collection, addDoc }) => {
                 const firebaseConfig = {
                     apiKey: "AIzaSyDYdTCripHL3z68_ok_3weUp34yvhD6zLk",
                     authDomain: "real-estate-78412.firebaseapp.com",
@@ -75,6 +75,39 @@ tailwind.config = {
                 };
                 const app = initializeApp(firebaseConfig);
                 const db = getFirestore(app);
+
+                window.submitInquiry = async function(propName, btn) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = "Sending...";
+                    btn.disabled = true;
+                    try {
+                        const userStr = localStorage.getItem('currentUser');
+                        let userName = "Guest";
+                        let userMobile = "Unknown";
+                        if(userStr) {
+                            try {
+                                const u = JSON.parse(userStr);
+                                userName = u.name || "Guest";
+                                userMobile = u.mobile || "Unknown";
+                            } catch(e){}
+                        }
+                        await addDoc(collection(db, "leads"), {
+                            name: userName,
+                            mobile: userMobile,
+                            message: "I am interested in property: " + propName,
+                            status: "New Lead 🟢",
+                            created_at: new Date().toISOString()
+                        });
+                        alert('Inquiry sent successfully! Our premium agent will contact you shortly.');
+                    } catch(e) {
+                        console.error(e);
+                        alert('Failed to send inquiry. Please call us directly.');
+                    } finally {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                };
+
 
                 try {
                     const docSnap = await getDoc(doc(db, "properties", id));
@@ -159,7 +192,7 @@ tailwind.config = {
                             <p class="text-sm text-gray-400 mb-8">Contact our dedicated agents to arrange an exclusive tour or request a detailed brochure.</p>
                             
                             <div class="flex flex-col sm:flex-row gap-4">
-                                <button onclick="alert('Our premium agent will contact you shortly!')" class="flex-1 bg-[#b58b4c] hover:bg-[#a07a40] text-white font-bold py-3.5 px-6 rounded transition-colors flex items-center justify-center gap-3 text-xs tracking-[0.1em] uppercase shadow-sm">
+                                <button onclick="submitInquiry('${p.name}', this)" class="flex-1 bg-[#b58b4c] hover:bg-[#a07a40] text-white font-bold py-3.5 px-6 rounded transition-colors flex items-center justify-center gap-3 text-xs tracking-[0.1em] uppercase shadow-sm">
                                     Enquire Now
                                 </button>
                                 <a href="tel:+919824763841" class="flex-1 bg-transparent border border-gray-500 hover:border-white text-white font-bold py-3.5 px-6 rounded transition-colors flex items-center justify-center gap-3 text-xs tracking-[0.1em] uppercase">
