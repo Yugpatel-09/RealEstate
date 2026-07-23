@@ -154,6 +154,7 @@ window.handleLoginSubmit = async function(event) {
                 id: userDoc.id,
                 name: userData.name,
                 email: userData.email,
+                mobile: userData.mobile || userData.email,
                 role: userData.role
             }));
             

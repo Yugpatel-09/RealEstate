@@ -89,6 +89,15 @@ tailwind.config = {
                                 const u = JSON.parse(userStr);
                                 userName = u.name || "Guest";
                                 userMobile = u.mobile || "Unknown";
+                                
+                                if (u.id && userMobile === "Unknown") {
+                                    const userDocSnap = await getDoc(doc(db, "users", u.id));
+                                    if (userDocSnap.exists() && userDocSnap.data().mobile) {
+                                        userMobile = userDocSnap.data().mobile;
+                                        u.mobile = userMobile;
+                                        localStorage.setItem('currentUser', JSON.stringify(u));
+                                    }
+                                }
                             } catch(e){}
                         }
                         await addDoc(collection(db, "leads"), {
