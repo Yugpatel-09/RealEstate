@@ -321,8 +321,33 @@ let PROPERTIES = [];
 const DEFAULT_PROPERTIES = [];
 
 function loadProperties() {
-    const customProps = JSON.parse(localStorage.getItem('customProperties') || '[]');
-    PROPERTIES = [...customProps, ...DEFAULT_PROPERTIES];
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js").then(({ initializeApp }) => {
+        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(async ({ getFirestore, collection, getDocs, query, orderBy }) => {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDYdTCripHL3z68_ok_3weUp34yvhD6zLk",
+                authDomain: "real-estate-78412.firebaseapp.com",
+                projectId: "real-estate-78412",
+                storageBucket: "real-estate-78412.firebasestorage.app",
+                messagingSenderId: "846988109657",
+                appId: "1:846988109657:web:ebf3f52bc25153c306ce48"
+            };
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            
+            try {
+                const q = query(collection(db, "properties"), orderBy("created_at", "desc"));
+                const querySnapshot = await getDocs(q);
+                PROPERTIES = [];
+                querySnapshot.forEach((doc) => {
+                    PROPERTIES.push({ id: doc.id, ...doc.data() });
+                });
+                renderProperties(PROPERTIES);
+                renderSaved(); // Re-render saved properties as well
+            } catch (err) {
+                console.error("Error loading properties:", err);
+            }
+        });
+    });
 }
 loadProperties();
 
